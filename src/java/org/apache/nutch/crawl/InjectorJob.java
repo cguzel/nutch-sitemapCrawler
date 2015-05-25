@@ -79,6 +79,8 @@ public class InjectorJob extends NutchTool implements Tool {
    */
   public static String nutchFetchIntervalMDName = "nutch.fetchInterval";
 
+  public static String nutchSitemapMDName = "nutch.sitemap";
+
   public static class UrlMapper extends
       Mapper<LongWritable, Text, String, WebPage> {
     private URLNormalizers urlNormalizers;
@@ -123,7 +125,17 @@ public class InjectorJob extends NutchTool implements Tool {
         for (int s = 1; s < splits.length; s++) {
           // find separation between name and value
           int indexEquals = splits[s].indexOf("=");
-          if (indexEquals == -1) {
+          if (splits[s].indexOf("sitemaps:") > -1) {
+            String[] sitemaps = splits[s].trim().split(" ");
+            String sitemapUrl;
+            metadata.put(nutchSitemapMDName, "true");
+            for (int i = 1; i < sitemaps.length; i++) {
+              sitemapUrl = url + sitemaps[i];
+              write(sitemapUrl, context, customInterval, customScore, metadata);
+            }
+            metadata.remove(nutchSitemapMDName);
+            continue;
+          } else if (indexEquals == -1) {
             // skip anything without a =
             continue;
           }
@@ -143,6 +155,10 @@ public class InjectorJob extends NutchTool implements Tool {
             metadata.put(metaname, metavalue);
         }
       }
+      write(url, context, customInterval, customScore, metadata);
+    }
+    private void write(String url,Context context,Integer customInterval,Float customScore,Map<String, String> metadata)
+        throws IOException, InterruptedException {
       try {
         url = urlNormalizers.normalize(url, URLNormalizers.SCOPE_INJECT);
         url = filters.filter(url); // filter the url
