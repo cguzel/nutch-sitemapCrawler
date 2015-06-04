@@ -527,6 +527,11 @@ public class FetcherReducer extends
                 }
               }
             }
+
+            for (String sitemap : rules.getSitemaps()) {
+              fit.page.getSitemaps().put(new Utf8(sitemap), new Utf8("robot"));
+            }
+
             final ProtocolOutput output = protocol.getProtocolOutput(fit.url,
                 fit.page);
             final ProtocolStatus status = output.getStatus();
