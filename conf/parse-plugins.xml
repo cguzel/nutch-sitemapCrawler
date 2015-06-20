@@ -66,6 +66,11 @@
 	<mimeType name="text/xml">
 		<plugin id="parse-tika" />
 		<plugin id="feed" />
+		<plugin id="parse-sitemap" />
+	</mimeType>
+
+	<mimeType name="application/xml">
+		<plugin id="parse-sitemap" />
 	</mimeType>
 
        <!-- Types for parse-ext plugin: required for unit tests to pass. -->
@@ -93,6 +98,8 @@
 			extension-id="org.apache.nutch.parse.swf.SWFParser" />
 		<alias name="parse-zip"
 			extension-id="org.apache.nutch.parse.zip.ZipParser" />
+		<alias name="parse-sitemap"
+			extension-id="org.apache.nutch.parse.sitemap.SitemapParser" />
 	</aliases>
 	
 </parse-plugins>

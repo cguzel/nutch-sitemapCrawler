@@ -77,6 +77,7 @@ public class ParserJob extends NutchTool implements Tool {
     FIELDS.add(WebPage.Field.OUTLINKS);
     FIELDS.add(WebPage.Field.METADATA);
     FIELDS.add(WebPage.Field.HEADERS);
+    FIELDS.add(WebPage.Field.SITEMAPS);
   }
 
   public static class ParserMapper extends
@@ -309,6 +310,10 @@ public class ParserJob extends NutchTool implements Tool {
           .println("    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)");
       System.err
           .println("    -all          - consider pages from all crawl jobs");
+      System.err
+          .println("    -sitemap      - parse only sitemap pages");
+      System.err
+          .println("    -nositemap    - no parse sitemap pages");
       System.err
           .println("    -resume       - resume a previous incomplete job");
       System.err
