@@ -65,7 +65,7 @@ import javax.activation.MimeType;
 				}
 				ParseStatus status = ParseStatus.newBuilder().build();
 				status.setMajorCode((int) ParseStatusCodes.SUCCESS);
-				parse = new Parse("","",(Outlink[]) outlinks.toArray(),status);
+				parse = new Parse("","",outlinks.toArray(new Outlink[outlinks.size()]),status);
 
 			}
 			return parse;
