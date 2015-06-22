@@ -78,6 +78,18 @@ public class DbUpdateMapper extends
       }
     }
 
+    Map<CharSequence, CharSequence> sitemaps= page.getSitemaps();
+    if (sitemaps != null) {
+      for (Entry<CharSequence, CharSequence> e : sitemaps.entrySet()) {
+        int depth = Integer.MAX_VALUE;
+        CharSequence depthUtf8 = page.getMarkers().get(DbUpdaterJob.DISTANCE);
+        if (depthUtf8 != null)
+          depth = Integer.parseInt(depthUtf8.toString());
+        scoreData.add(new ScoreDatum(0.0f, e.getKey().toString(), e.getValue()
+            .toString(), depth));
+      }
+    }
+
     // TODO: Outlink filtering (i.e. "only keep the first n outlinks")
     try {
       scoringFilters.distributeScoreToOutlinks(url, page, scoreData,
