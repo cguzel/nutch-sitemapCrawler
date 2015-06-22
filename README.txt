@@ -1,4 +1,8 @@
-Apache Nutch README
+Apache Nutch for Sitemap Crawler README
+
+For the information about Sitemap Crawler for Nutch, please visit our wiki:
+
+   https://wiki.apache.org/nutch/GoogleSummerOfCode/SitemapCrawler
 
 For the latest information about Nutch, please visit our website at:
 
