@@ -27,9 +27,18 @@ import javax.activation.MimeType;
 
 		private Configuration conf;
 
+		private static Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
+
+		static {
+			FIELDS.add(WebPage.Field.BASE_URL);
+		}
+
 		@Override
 		public Parse getParse(String url, WebPage page) {
 			Parse parse = null;
+			if(page.getMetadata().get("nutch.sitemap").toString() != "true"){
+				return parse;
+			}
 			SiteMapParser parser = new SiteMapParser();
 
 			AbstractSiteMap siteMap = null;
@@ -83,6 +92,6 @@ import javax.activation.MimeType;
 
 		@Override
 		public Collection<WebPage.Field> getFields() {
-			return null;
+			return FIELDS;
 		}
 	}

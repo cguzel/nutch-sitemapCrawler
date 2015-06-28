@@ -113,25 +113,23 @@ public class ParseUtil extends Configured {
    * @throws ParseException
    *           If there is an error parsing.
    */
-  public Parse parse(String url, WebPage page) throws ParserNotFound,
-      ParseException {
+  public Parse parse(String url, WebPage page) throws ParseException {
     Parser[] parsers = null;
+    Parse parse = null;
+
+    if (page.getMetadata().get("nutch.sitemap").toString() == "true") {
+      Parser parser = this.parserFactory.getParserById("parse-sitemap");
+      parse = parse(url, page, parser);
+      if (parse != null && ParseStatusUtils.isSuccess(parse.getParseStatus())) {
+        return parse;
+      }
+    }
 
     String contentType = TableUtil.toString(page.getContentType());
-
     parsers = this.parserFactory.getParsers(contentType, url);
 
     for (int i = 0; i < parsers.length; i++) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Parsing [" + url + "] with [" + parsers[i] + "]");
-      }
-      Parse parse = null;
-
-      if (maxParseTime != -1)
-        parse = runParser(parsers[i], url, page);
-      else
-        parse = parsers[i].getParse(url, page);
-
+      parse = parse(url, page, parsers[i]);
       if (parse != null && ParseStatusUtils.isSuccess(parse.getParseStatus())) {
         return parse;
       }
@@ -141,6 +139,17 @@ public class ParseUtil extends Configured {
         + contentType);
     return ParseStatusUtils.getEmptyParse(new ParseException(
         "Unable to successfully parse content"), null);
+  }
+
+  private Parse parse(String url, WebPage page, Parser parser) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Parsing [" + url + "] with [" + parser + "]");
+    }
+    if (maxParseTime != -1) {
+      return runParser(parser, url, page);
+    } else {
+      return parser.getParse(url, page);
+    }
   }
 
   private Parse runParser(Parser p, String url, WebPage page) {
