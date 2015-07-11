@@ -117,7 +117,7 @@ public class ParseUtil extends Configured {
     Parser[] parsers = null;
     Parse parse = null;
 
-    if (page.getMetadata().get("nutch.sitemap").toString() == "true") {
+    if (true || page.getMetadata().get("nutch.sitemap")!=null && page.getMetadata().get("nutch.sitemap").toString() == "true") {
       Parser parser = this.parserFactory.getParserById("parse-sitemap");
       parse = parse(url, page, parser);
       if (parse != null && ParseStatusUtils.isSuccess(parse.getParseStatus())) {

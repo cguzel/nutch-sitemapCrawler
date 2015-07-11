@@ -133,7 +133,6 @@ public class InjectorJob extends NutchTool implements Tool {
               sitemapUrl = url + sitemaps[i];
               write(sitemapUrl, context, customInterval, customScore, metadata);
             }
-            metadata.remove(nutchSitemapMDName);
             continue;
           } else if (indexEquals == -1) {
             // skip anything without a =
