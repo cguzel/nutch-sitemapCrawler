@@ -183,7 +183,6 @@
       <packageset dir="${plugins.dir}/parse-js/src/java"/>
       <!--packageset dir="${plugins.dir}/parse-swf/src/java"/-->
       <packageset dir="${plugins.dir}/parse-tika/src/java"/>
-      <packageset dir="${plugins.dir}/parse-sitemap/src/java"/>
       <!--packageset dir="${plugins.dir}/parse-zip/src/java"/-->
       <packageset dir="${plugins.dir}/protocol-file/src/java"/>
       <packageset dir="${plugins.dir}/protocol-ftp/src/java"/>
@@ -614,7 +613,6 @@
       <packageset dir="${plugins.dir}/parse-metatags/src/java"/>
       <!--packageset dir="${plugins.dir}/parse-swf/src/java"/-->
       <packageset dir="${plugins.dir}/parse-tika/src/java"/>
-      <packageset dir="${plugins.dir}/parse-sitemap/src/java"/>
       <!--packageset dir="${plugins.dir}/parse-zip/src/java"/-->
       <packageset dir="${plugins.dir}/protocol-file/src/java"/>
       <packageset dir="${plugins.dir}/protocol-ftp/src/java"/>
@@ -996,8 +994,6 @@
         <source path="${basedir}/src/plugin/parse-zip/src/test/" /> -->
         <source path="${basedir}/src/plugin/parse-tika/src/java/" />
         <source path="${basedir}/src/plugin/parse-tika/src/test/" />
-        <source path="${basedir}/src/plugin/parse-sitemap/src/java/" />
-        <source path="${basedir}/src/plugin/parse-sitemap/src/test/" />
         <source path="${basedir}/src/plugin/protocol-file/src/java/" />
         <source path="${basedir}/src/plugin/protocol-file/src/test/" />
         <source path="${basedir}/src/plugin/protocol-ftp/src/java/" />

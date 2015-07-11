@@ -94,8 +94,6 @@
 			extension-id="org.apache.nutch.parse.swf.SWFParser" />
 		<alias name="parse-zip"
 			extension-id="org.apache.nutch.parse.zip.ZipParser" />
-		<alias name="parse-sitemap"
-			extension-id="org.apache.nutch.parse.sitemap.SitemapParser" />
 	</aliases>
 	
 </parse-plugins>
