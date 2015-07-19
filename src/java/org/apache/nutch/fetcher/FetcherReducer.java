@@ -491,7 +491,8 @@ public class FetcherReducer extends
           }
           try {
             LOG.info("fetching " + fit.url + " (queue crawl delay="
-                + fetchQueues.getFetchItemQueue(fit.queueID).crawlDelay + "ms)");
+                + fetchQueues.getFetchItemQueue(fit.queueID).crawlDelay
+                + "ms)");
 
             // fetch the page
             final Protocol protocol = this.protocolFactory.getProtocol(fit.url);
@@ -528,8 +529,16 @@ public class FetcherReducer extends
               }
             }
 
-            for (String sitemap : rules.getSitemaps()) {
-              fit.page.getSitemaps().put(new Utf8(sitemap), new Utf8("robot"));
+            boolean stmRobot = context.getConfiguration().getBoolean("fetcher.job.sitemap",false);
+
+            if (stmRobot && (fit.u.getFile() == null
+                || fit.u.getFile().length() == 0 || (
+                fit.u.getFile().length() == 1 && fit.u.getFile().equals(
+                    "/")))) {
+              for (String sitemap : rules.getSitemaps()) {
+                fit.page.getSitemaps()
+                    .put(new Utf8(sitemap), new Utf8("robot"));
+              }
             }
 
             final ProtocolOutput output = protocol.getProtocolOutput(fit.url,

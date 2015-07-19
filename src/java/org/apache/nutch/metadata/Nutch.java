@@ -112,6 +112,8 @@ public interface Nutch {
   public static final String ARG_CLASS = "class";
   /** Depth (number of cycles) of a crawl. */
   public static final String ARG_DEPTH = "depth";
+  /** Sitemaps. */
+  public static final String ARG_SITEMAP = "sitemap";
 
   // short constants for status / results fields
   /** Status / result message. */

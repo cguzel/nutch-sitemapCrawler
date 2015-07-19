@@ -128,10 +128,11 @@ public class InjectorJob extends NutchTool implements Tool {
           if (splits[s].indexOf("sitemaps:") > -1) {
             String[] sitemaps = splits[s].trim().split(" ");
             String sitemapUrl;
-            metadata.put(nutchSitemapMDName, "true");
+            Map<String, String> sitemapMetadata = new TreeMap<String, String>();
+            sitemapMetadata.put(nutchSitemapMDName, "true");
             for (int i = 1; i < sitemaps.length; i++) {
               sitemapUrl = url + sitemaps[i];
-              write(sitemapUrl, context, customInterval, customScore, metadata);
+              write(sitemapUrl, context, customInterval, customScore, sitemapMetadata);
             }
             continue;
           } else if (indexEquals == -1) {
