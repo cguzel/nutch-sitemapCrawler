@@ -22,24 +22,30 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.nutch.crawl.CrawlStatus;
 import org.apache.nutch.crawl.Signature;
 import org.apache.nutch.crawl.SignatureFactory;
 import org.apache.nutch.fetcher.FetcherJob;
+import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.net.URLFilterException;
 import org.apache.nutch.net.URLFilters;
 import org.apache.nutch.net.URLNormalizers;
 import org.apache.nutch.storage.Mark;
+import org.apache.nutch.storage.ParseStatus;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.URLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -117,14 +123,6 @@ public class ParseUtil extends Configured {
     Parser[] parsers = null;
     Parse parse = null;
 
-    if (true || page.getMetadata().get("nutch.sitemap")!=null && page.getMetadata().get("nutch.sitemap").toString() == "true") {
-      Parser parser = this.parserFactory.getParserById("parse-sitemap");
-      parse = parse(url, page, parser);
-      if (parse != null && ParseStatusUtils.isSuccess(parse.getParseStatus())) {
-        return parse;
-      }
-    }
-
     String contentType = TableUtil.toString(page.getContentType());
     parsers = this.parserFactory.getParsers(contentType, url);
 
@@ -167,24 +165,124 @@ public class ParseUtil extends Configured {
     return res;
   }
 
-  /**
-   * Parses given web page and stores parsed content within page. Puts a
-   * meta-redirect to outlinks.
-   * 
-   * @param key
-   * @param page
-   */
-  public void process(String key, WebPage page) {
-    String url = TableUtil.unreverseUrl(key);
+  public boolean status(String url, WebPage page) {
     byte status = page.getStatus().byteValue();
     if (status != CrawlStatus.STATUS_FETCHED) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Skipping " + url + " as status is: "
             + CrawlStatus.getName(status));
       }
+      return true;
+    }
+    return false;
+  }
+
+  public void processSitemapParse(String url, WebPage page,
+      Mapper.Context context) {
+    if (!status(url, page)) {
       return;
     }
 
+    SitemapParser sParser = new SitemapParser();
+    SitemapParse sitemapParse = sParser.getParse(url, page);
+
+    if (sitemapParse == null) {
+      return;
+    }
+
+    ParseStatus pstatus = sitemapParse.getParseStatus();
+    page.setParseStatus(pstatus);
+    if (ParseStatusUtils.isSuccess(pstatus)) {
+      if (pstatus.getMinorCode() == ParseStatusCodes.SUCCESS_REDIRECT) {
+        successRedirect(url, page, pstatus);
+      } else {
+        final Map<Outlink, Metadata> outlinkMap = sitemapParse.getOutlinkMap();
+        Set<Outlink> outlinks = outlinkMap.keySet();
+        setSignature(page);
+
+        for (Outlink outlink : outlinks) {
+          String toUrl = outlink.getToUrl();
+
+          try {
+            toUrl = normalizers.normalize(toUrl, URLNormalizers.SCOPE_OUTLINK);
+            toUrl = filters.filter(toUrl);
+          } catch (MalformedURLException e2) {
+            return;
+          } catch (URLFilterException e) {
+            return;
+          }
+          if (toUrl == null) {
+            return;
+          }
+          String reversedUrl = null;
+          try {
+            reversedUrl = TableUtil.reverseUrl(toUrl); // collect it
+          } catch (MalformedURLException e) {
+            e.printStackTrace();
+          }
+          WebPage newRow = WebPage.newBuilder().build();
+          for (Map.Entry<String, String[]> metadata : outlinkMap.get(outlink)
+              .getMetaData()) {
+            System.out.println();
+            newRow.getMetadata().put(new Utf8(metadata.getKey()),
+                ByteBuffer.wrap(metadata.getValue()[0].getBytes()));
+
+          }
+          Mark.SITEMAP_MARK.putMark(newRow, new Utf8("y"));
+
+          try {
+            context.write(reversedUrl, newRow);
+          } catch (IOException e) {
+            e.printStackTrace();
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+          }
+        }
+
+        parseMark(page);
+      }
+    }
+
+  }
+
+  private void parseMark(WebPage page) {
+    Utf8 fetchMark = Mark.FETCH_MARK.checkMark(page);
+    if (fetchMark != null) {
+      Mark.PARSE_MARK.putMark(page, fetchMark);
+    }
+  }
+
+  private void putOutlink(WebPage page, Outlink outlink, String toUrl) {
+    try {
+      toUrl = normalizers.normalize(toUrl, URLNormalizers.SCOPE_OUTLINK);
+      toUrl = filters.filter(toUrl);
+    } catch (MalformedURLException e2) {
+      return;
+    } catch (URLFilterException e) {
+      return;
+    }
+    if (toUrl == null) {
+      return;
+    }
+    Utf8 utf8ToUrl = new Utf8(toUrl);
+    if (page.getOutlinks().get(utf8ToUrl) != null) {
+      // skip duplicate outlinks
+      return;
+    }
+    page.getOutlinks().put(utf8ToUrl, new Utf8(outlink.getAnchor()));
+  }
+
+  /**
+   * Parses given web page and stores parsed content within page. Puts a
+   * meta-redirect to outlinks.
+   *
+   * @param url
+   * @param page
+   */
+  public void process(String url, WebPage page) {
+    if (status(url, page)) {
+      return;
+    }
     Parse parse;
     try {
       parse = parse(url, page);
@@ -202,58 +300,20 @@ public class ParseUtil extends Configured {
       return;
     }
 
-    org.apache.nutch.storage.ParseStatus pstatus = parse.getParseStatus();
+    ParseStatus pstatus = parse.getParseStatus();
     page.setParseStatus(pstatus);
     if (ParseStatusUtils.isSuccess(pstatus)) {
       if (pstatus.getMinorCode() == ParseStatusCodes.SUCCESS_REDIRECT) {
-        String newUrl = ParseStatusUtils.getMessage(pstatus);
-        int refreshTime = Integer.parseInt(ParseStatusUtils.getArg(pstatus, 1));
-        try {
-          newUrl = normalizers.normalize(newUrl, URLNormalizers.SCOPE_FETCHER);
-          if (newUrl == null) {
-            LOG.warn("redirect normalized to null " + url);
-            return;
-          }
-          try {
-            newUrl = filters.filter(newUrl);
-          } catch (URLFilterException e) {
-            return;
-          }
-          if (newUrl == null) {
-            LOG.warn("redirect filtered to null " + url);
-            return;
-          }
-        } catch (MalformedURLException e) {
-          LOG.warn("malformed url exception parsing redirect " + url);
-          return;
-        }
-        page.getOutlinks().put(new Utf8(newUrl), new Utf8());
-        page.getMetadata().put(FetcherJob.REDIRECT_DISCOVERED,
-            TableUtil.YES_VAL);
-        if (newUrl == null || newUrl.equals(url)) {
-          String reprUrl = URLUtil.chooseRepr(url, newUrl,
-              refreshTime < FetcherJob.PERM_REFRESH_TIME);
-          if (reprUrl == null) {
-            LOG.warn("reprUrl==null for " + url);
-            return;
-          } else {
-            page.setReprUrl(new Utf8(reprUrl));
-          }
-        }
+        successRedirect(url, page, pstatus);
       } else {
         page.setText(new Utf8(parse.getText()));
         page.setTitle(new Utf8(parse.getTitle()));
-        ByteBuffer prevSig = page.getSignature();
-        if (prevSig != null) {
-          page.setPrevSignature(prevSig);
-        }
-        final byte[] signature = sig.calculate(page);
-        page.setSignature(ByteBuffer.wrap(signature));
+
+        setSignature(page);
+
         if (page.getOutlinks() != null) {
           page.getOutlinks().clear();
         }
-        final Outlink[] outlinks = parse.getOutlinks();
-        int outlinksToStore = Math.min(maxOutlinks, outlinks.length);
         String fromHost;
         if (ignoreExternalLinks) {
           try {
@@ -266,24 +326,11 @@ public class ParseUtil extends Configured {
         }
         int validCount = 0;
 
-        for (int i = 0; validCount < outlinksToStore && i < outlinks.length; i++) {
+        final Outlink[] outlinks = parse.getOutlinks();
+        int outlinksToStore = Math.min(maxOutlinks, outlinks.length);
+        for (int i = 0; validCount < outlinksToStore
+            && i < outlinks.length; i++, validCount++) {
           String toUrl = outlinks[i].getToUrl();
-          try {
-            toUrl = normalizers.normalize(toUrl, URLNormalizers.SCOPE_OUTLINK);
-            toUrl = filters.filter(toUrl);
-          } catch (MalformedURLException e2) {
-            continue;
-          } catch (URLFilterException e) {
-            continue;
-          }
-          if (toUrl == null) {
-            continue;
-          }
-          Utf8 utf8ToUrl = new Utf8(toUrl);
-          if (page.getOutlinks().get(utf8ToUrl) != null) {
-            // skip duplicate outlinks
-            continue;
-          }
           String toHost;
           if (ignoreExternalLinks) {
             try {
@@ -295,14 +342,56 @@ public class ParseUtil extends Configured {
               continue; // skip it
             }
           }
-          validCount++;
-          page.getOutlinks().put(utf8ToUrl, new Utf8(outlinks[i].getAnchor()));
+          putOutlink(page, outlinks[i], toUrl);
         }
-        Utf8 fetchMark = Mark.FETCH_MARK.checkMark(page);
-        if (fetchMark != null) {
-          Mark.PARSE_MARK.putMark(page, fetchMark);
-        }
+        parseMark(page);
       }
     }
+  }
+
+  private void successRedirect(String url, WebPage page, ParseStatus pstatus) {
+    String newUrl = ParseStatusUtils.getMessage(pstatus);
+    int refreshTime = Integer.parseInt(ParseStatusUtils.getArg(pstatus, 1));
+    try {
+      newUrl = normalizers.normalize(newUrl, URLNormalizers.SCOPE_FETCHER);
+      if (newUrl == null) {
+        LOG.warn("redirect normalized to null " + url);
+        return;
+      }
+      try {
+        newUrl = filters.filter(newUrl);
+      } catch (URLFilterException e) {
+        return;
+      }
+      if (newUrl == null) {
+        LOG.warn("redirect filtered to null " + url);
+        return;
+      }
+    } catch (MalformedURLException e) {
+      LOG.warn("malformed url exception parsing redirect " + url);
+      return;
+    }
+    page.getOutlinks().put(new Utf8(newUrl), new Utf8());
+    page.getMetadata().put(FetcherJob.REDIRECT_DISCOVERED,
+        TableUtil.YES_VAL);
+    if (newUrl == null || newUrl.equals(url)) {
+      String reprUrl = URLUtil.chooseRepr(url, newUrl,
+          refreshTime < FetcherJob.PERM_REFRESH_TIME);
+      if (reprUrl == null) {
+        LOG.warn("reprUrl==null for " + url);
+        return;
+      } else {
+        page.setReprUrl(new Utf8(reprUrl));
+      }
+    }
+  }
+
+  private void setSignature(WebPage page) {
+    ByteBuffer prevSig = page.getSignature();
+    if (prevSig != null) {
+      page.setPrevSignature(prevSig);
+    }
+    final byte[] signature = sig.calculate(page);
+    page.setSignature(ByteBuffer.wrap(signature));
   }
 }

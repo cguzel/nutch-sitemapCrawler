@@ -44,6 +44,11 @@ public class Outlink implements Writable {
     this.metadata = null;
   }
 
+  public Outlink(String toUrl, String anchor,Metadata metadata) throws MalformedURLException {
+    this(toUrl,anchor);
+    this.metadata = metadata;
+  }
+
   public void readFields(DataInput in) throws IOException {
     toUrl = Text.readString(in);
     anchor = Text.readString(in);

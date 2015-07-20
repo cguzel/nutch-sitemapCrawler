@@ -1,4 +1,4 @@
-package org.apache.nutch.parse.sitemap;
+package org.apache.nutch.parse;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -6,12 +6,10 @@ import java.net.URL;
 import java.util.*;
 
 import crawlercommons.sitemaps.*;
-import net.sourceforge.sitemaps.Sitemap;
-
-import net.sourceforge.sitemaps.SitemapUrl;
 import org.apache.avro.util.Utf8;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.nutch.metadata.Metadata;
 import org.apache.nutch.parse.Outlink;
 import org.apache.nutch.parse.Parse;
 
@@ -23,7 +21,7 @@ import org.apache.nutch.util.MimeUtil;
 
 import javax.activation.MimeType;
 
-	public class SitemapParser implements Parser {
+public class SitemapParser {
 
 		private Configuration conf;
 
@@ -33,12 +31,8 @@ import javax.activation.MimeType;
 			FIELDS.add(WebPage.Field.BASE_URL);
 		}
 
-		@Override
-		public Parse getParse(String url, WebPage page) {
-			Parse parse = null;
-			if(page.getMetadata().get("nutch.sitemap").toString() != "true"){
-				return parse;
-			}
+	public SitemapParse getParse(String url, WebPage page) {
+		SitemapParse sitemapParse = null;
 			SiteMapParser parser = new SiteMapParser();
 
 			AbstractSiteMap siteMap = null;
@@ -63,21 +57,29 @@ import javax.activation.MimeType;
 
 			} else {
 				Collection<SiteMapURL> links = ((SiteMap) siteMap).getSiteMapUrls();
-				ArrayList<Outlink> outlinks = new ArrayList<Outlink>();
+				Map<Outlink, Metadata> outlinkMap = new HashMap<Outlink, Metadata>();
 
 				for (SiteMapURL sitemapUrl : links) {
+					Metadata metadata = new Metadata();
+					metadata
+							.add("changeFrequency", sitemapUrl.getChangeFrequency().name());
+					metadata.add("lastModified", Long.toString(
+							sitemapUrl.getLastModified().getTime()));
+					metadata.add("priority", Double.toString(sitemapUrl.getPriority()));
 					try {
-						outlinks.add(new Outlink(sitemapUrl.getUrl().toString(), "deneme"));
+						outlinkMap.put(
+								new Outlink(sitemapUrl.getUrl().toString(), "sitemap.outlink"),
+								metadata);
 					} catch (MalformedURLException e) {
 						e.printStackTrace();
 					}
 				}
 				ParseStatus status = ParseStatus.newBuilder().build();
 				status.setMajorCode((int) ParseStatusCodes.SUCCESS);
-				parse = new Parse("","",outlinks.toArray(new Outlink[outlinks.size()]),status);
+				sitemapParse = new SitemapParse(outlinkMap, status);
 
 			}
-			return parse;
+		return sitemapParse;
 		}
 
 
@@ -85,12 +87,10 @@ import javax.activation.MimeType;
 			this.conf = conf;
 		}
 
-		@Override
 		public Configuration getConf() {
 			return conf;
 		}
 
-		@Override
 		public Collection<WebPage.Field> getFields() {
 			return FIELDS;
 		}
