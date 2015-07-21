@@ -62,6 +62,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class ParseUtil extends Configured {
 
+  public enum ChangeFrequency {
+    ALWAYS, HOURLY, DAILY, WEEKLY, MONTHLY, YEARLY, NEVER
+  }
   /* our log stream */
   public static final Logger LOG = LoggerFactory.getLogger(ParseUtil.class);
 
@@ -179,7 +182,7 @@ public class ParseUtil extends Configured {
 
   public void processSitemapParse(String url, WebPage page,
       Mapper.Context context) {
-    if (!status(url, page)) {
+    if (status(url, page)) {
       return;
     }
 
@@ -221,13 +224,23 @@ public class ParseUtil extends Configured {
             e.printStackTrace();
           }
           WebPage newRow = WebPage.newBuilder().build();
-          for (Map.Entry<String, String[]> metadata : outlinkMap.get(outlink)
-              .getMetaData()) {
+          Set<Map.Entry<String, String[]>> metaDatas = outlinkMap.get(outlink)
+              .getMetaData();
+          for (Map.Entry<String, String[]> metadata : metaDatas) {
             System.out.println();
             newRow.getMetadata().put(new Utf8(metadata.getKey()),
                 ByteBuffer.wrap(metadata.getValue()[0].getBytes()));
-
           }
+
+          int changeFrequency = calculateFetchInterval(
+              outlinkMap.get(outlink).get("changeFrequency"));
+          String modifiedTime = outlinkMap.get(outlink).get("lastModified");
+
+          newRow.setFetchInterval(changeFrequency);
+          newRow.setModifiedTime(Long.valueOf(modifiedTime));
+          newRow.setScore(
+              Float.parseFloat(outlinkMap.get(outlink).get("priority")));
+
           Mark.SITEMAP_MARK.putMark(newRow, new Utf8("y"));
 
           try {
@@ -243,6 +256,24 @@ public class ParseUtil extends Configured {
       }
     }
 
+  }
+
+  private int calculateFetchInterval(String changeFrequency) {
+    if (changeFrequency.equals(ChangeFrequency.ALWAYS.toString())
+        || changeFrequency.equals(ChangeFrequency.HOURLY.toString())) {
+      return 3600; // 60 * 60
+    } else if (changeFrequency.equals(ChangeFrequency.DAILY.toString())) {
+      return 86400; // 24 * 60 * 60
+    } else if (changeFrequency.equals(ChangeFrequency.WEEKLY.toString())) {
+      return 604800; // 7 * 24 * 60 * 60
+    } else if (changeFrequency.equals(ChangeFrequency.MONTHLY.toString())) {
+      return 2628000; // average seconds in one month
+    } else if (changeFrequency.equals(ChangeFrequency.YEARLY.toString())
+        || changeFrequency.equals(ChangeFrequency.NEVER.toString())) {
+      return 31536000; // average seconds in one year
+    } else {
+      return Integer.MAX_VALUE; // other intervals are larger than Integer.MAX_VALUE
+    }
   }
 
   private void parseMark(WebPage page) {
