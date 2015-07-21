@@ -78,6 +78,7 @@ public class ParserJob extends NutchTool implements Tool {
     FIELDS.add(WebPage.Field.METADATA);
     FIELDS.add(WebPage.Field.HEADERS);
     FIELDS.add(WebPage.Field.SITEMAPS);
+    FIELDS.add(WebPage.Field.STM_PRIORITY);
   }
 
   public static class ParserMapper extends

@@ -238,7 +238,7 @@ public class ParseUtil extends Configured {
 
           newRow.setFetchInterval(changeFrequency);
           newRow.setModifiedTime(Long.valueOf(modifiedTime));
-          newRow.setScore(
+          newRow.setStmPriority(
               Float.parseFloat(outlinkMap.get(outlink).get("priority")));
 
           Mark.SITEMAP_MARK.putMark(newRow, new Utf8("y"));

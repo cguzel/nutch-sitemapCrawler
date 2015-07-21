@@ -79,6 +79,8 @@ http://gora.apache.org/current/gora-hbase.html
         
         <!-- score fields                                       -->
         <field name="score" family="s" qualifier="s"/>
+        <field name="stmPriority" family="s" qualifier="sp"/>
+
         <field name="headers" family="h"/>
         <field name="inlinks" family="il"/>
         <field name="outlinks" family="ol"/>
