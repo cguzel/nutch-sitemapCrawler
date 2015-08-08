@@ -65,8 +65,6 @@ public class InjectorJob extends NutchTool implements Tool {
 
   private static final Set<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
 
-  private static final Utf8 YES_STRING = new Utf8("y");
-
   static {
     FIELDS.add(WebPage.Field.MARKERS);
     FIELDS.add(WebPage.Field.STATUS);
@@ -78,8 +76,6 @@ public class InjectorJob extends NutchTool implements Tool {
    * metadata key reserved for setting a custom fetchInterval for a specific URL
    */
   public static String nutchFetchIntervalMDName = "nutch.fetchInterval";
-
-  public static String nutchSitemapMDName = "nutch.sitemap";
 
   public static class UrlMapper extends
       Mapper<LongWritable, Text, String, WebPage> {
@@ -119,6 +115,7 @@ public class InjectorJob extends NutchTool implements Tool {
       float customScore = -1f;
       int customInterval = interval;
       Map<String, String> metadata = new TreeMap<String, String>();
+      InjectType injectType = InjectType.INJECT;
       if (url.indexOf("\t") != -1) {
         String[] splits = url.split("\t");
         url = splits[0];
@@ -128,12 +125,14 @@ public class InjectorJob extends NutchTool implements Tool {
           if (splits[s].indexOf("sitemaps:") > -1) {
             String[] sitemaps = splits[s].trim().split(" ");
             String sitemapUrl;
-            Map<String, String> sitemapMetadata = new TreeMap<String, String>();
-            sitemapMetadata.put(nutchSitemapMDName, "true");
             for (int i = 1; i < sitemaps.length; i++) {
               sitemapUrl = url + sitemaps[i];
-              write(sitemapUrl, context, customInterval, customScore, sitemapMetadata);
+              write(sitemapUrl, context, customInterval, customScore,
+                  new HashMap<String, String>(), InjectType.SITEMAP_INJECT);
             }
+            continue;
+          } else if (splits[s].indexOf("-sitemap") == 0) {
+            injectType = InjectType.SITEMAP_INJECT;
             continue;
           } else if (indexEquals == -1) {
             // skip anything without a =
@@ -155,9 +154,11 @@ public class InjectorJob extends NutchTool implements Tool {
             metadata.put(metaname, metavalue);
         }
       }
-      write(url, context, customInterval, customScore, metadata);
+      write(url, context, customInterval, customScore, metadata, injectType);
     }
-    private void write(String url,Context context,Integer customInterval,Float customScore,Map<String, String> metadata)
+
+    private void write(String url, Context context, Integer customInterval,
+        Float customScore, Map<String, String> metadata, InjectType injectType)
         throws IOException, InterruptedException {
       try {
         url = urlNormalizers.normalize(url, URLNormalizers.SCOPE_INJECT);
@@ -200,7 +201,7 @@ public class InjectorJob extends NutchTool implements Tool {
         context.getCounter("injector", "urls_injected").increment(1);
         row.getMarkers()
             .put(DbUpdaterJob.DISTANCE, new Utf8(String.valueOf(0)));
-        Mark.INJECT_MARK.putMark(row, YES_STRING);
+        Mark.INJECT_MARK.putMark(row, injectType.getTypeString());
         context.write(reversedUrl, row);
       }
     }
