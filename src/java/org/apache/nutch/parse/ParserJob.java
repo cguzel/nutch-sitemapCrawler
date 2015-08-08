@@ -25,6 +25,7 @@ import java.util.Map;
 
 import org.apache.avro.util.Utf8;
 import org.apache.gora.filter.MapFieldValueFilter;
+import org.apache.nutch.net.URLFilters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -137,8 +138,7 @@ public class ParserJob extends NutchTool implements Tool {
         return;
       }
 
-      if (sitemap && page.getMetadata()
-          .containsKey(new Utf8("nutch.sitemap"))) {
+      if (sitemap && URLFilters.isSitemap(page)) {
         LOG.info("Parsing for sitemap"); //TODO this log should be top line
         parseUtil.processSitemapParse(unreverseKey, page, context);
       } else {
@@ -334,7 +334,7 @@ public class ParserJob extends NutchTool implements Tool {
       System.err
           .println("    -all          - consider pages from all crawl jobs");
       System.err
-          .println("    -sitemap      - parse only sitemap pages");
+          .println("    -sitemap      - parse only sitemap pages, default false");
       System.err
           .println("    -resume       - resume a previous incomplete job");
       System.err

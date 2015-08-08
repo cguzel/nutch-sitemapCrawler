@@ -25,6 +25,7 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.nutch.crawl.CrawlStatus;
+import org.apache.nutch.crawl.InjectType;
 import org.apache.nutch.crawl.Signature;
 import org.apache.nutch.crawl.SignatureFactory;
 import org.apache.nutch.fetcher.FetcherJob;
@@ -241,7 +242,7 @@ public class ParseUtil extends Configured {
           newRow.setStmPriority(
               Float.parseFloat(outlinkMap.get(outlink).get("priority")));
 
-          Mark.SITEMAP_MARK.putMark(newRow, new Utf8("y"));
+          Mark.INJECT_MARK.putMark(newRow, InjectType.SITEMAP_INJECT.getTypeString());
 
           try {
             context.write(reversedUrl, newRow);
