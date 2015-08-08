@@ -41,6 +41,7 @@ public class GeneratorMapper extends
   private URLNormalizers normalizers;
   private boolean filter;
   private boolean normalise;
+  private boolean sitemap;
   private FetchSchedule schedule;
   private ScoringFilters scoringFilters;
   private long curTime;
@@ -76,6 +77,10 @@ public class GeneratorMapper extends
       }
       if (filter && filters.filter(url) == null)
         return;
+      if ((sitemap && !URLFilters.isSitemap(page)) || !sitemap && URLFilters
+          .isSitemap(page))
+        return;
+
     } catch (URLFilterException e) {
       GeneratorJob.LOG
           .warn("Couldn't filter url: {} ({})", url, e.getMessage());
@@ -109,6 +114,7 @@ public class GeneratorMapper extends
     Configuration conf = context.getConfiguration();
     filter = conf.getBoolean(GeneratorJob.GENERATOR_FILTER, true);
     normalise = conf.getBoolean(GeneratorJob.GENERATOR_NORMALISE, true);
+    sitemap = conf.getBoolean(GeneratorJob.GENERATOR_SITEMAP, false);
     if (filter) {
       filters = new URLFilters(conf);
     }
