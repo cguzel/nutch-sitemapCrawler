@@ -529,15 +529,15 @@ public class FetcherReducer extends
               }
             }
 
-            boolean stmRobot = context.getConfiguration().getBoolean("fetcher.job.sitemap",false);
+            boolean stmRobot = context.getConfiguration().getBoolean(FetcherJob.SITEMAP_DETECT, false);
 
             if (stmRobot && (fit.u.getFile() == null
                 || fit.u.getFile().length() == 0 || (
                 fit.u.getFile().length() == 1 && fit.u.getFile().equals(
                     "/")))) {
-              for (String sitemap : rules.getSitemaps()) {
+              for (String stmUrl : rules.getSitemaps()) {
                 fit.page.getSitemaps()
-                    .put(new Utf8(sitemap), new Utf8("robot"));
+                    .put(new Utf8(stmUrl), new Utf8());
               }
             }
 
