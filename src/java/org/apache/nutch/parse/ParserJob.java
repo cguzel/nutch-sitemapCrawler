@@ -105,7 +105,11 @@ public class ParserJob extends NutchTool implements Tool {
       sitemap = conf.getBoolean(SITEMAP_PARSE, false);
       batchId = new Utf8(
           conf.get(GeneratorJob.BATCH_ID, Nutch.ALL_BATCH_ID_STR));
-      skipTruncated = conf.getBoolean(SKIP_TRUNCATED, true);
+      if (sitemap) {
+        skipTruncated = false;
+      } else {
+        skipTruncated = conf.getBoolean(SKIP_TRUNCATED, true);
+      }
     }
 
     @Override

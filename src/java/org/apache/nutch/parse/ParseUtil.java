@@ -100,7 +100,12 @@ public class ParseUtil extends Configured {
   public void setConf(Configuration conf) {
     this.conf = conf;
     parserFactory = new ParserFactory(conf);
-    maxParseTime = conf.getInt("parser.timeout", DEFAULT_MAX_PARSE_TIME);
+    if (conf.getBoolean("parse.sitemap", false)) {
+      maxParseTime = conf.getInt("parser.timeout", DEFAULT_MAX_PARSE_TIME);
+    } else {
+      maxParseTime = conf
+          .getInt("sitemap.parser.timeout", DEFAULT_MAX_PARSE_TIME);
+    }
     sig = SignatureFactory.getSignature(conf);
     filters = new URLFilters(conf);
     normalizers = new URLNormalizers(conf, URLNormalizers.SCOPE_OUTLINK);

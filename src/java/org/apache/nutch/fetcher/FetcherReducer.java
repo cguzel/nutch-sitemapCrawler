@@ -820,7 +820,13 @@ public class FetcherReducer extends
     parse = conf.getBoolean(FetcherJob.PARSE_KEY, false);
     storingContent = conf.getBoolean("fetcher.store.content", true);
     if (parse) {
-      skipTruncated = conf.getBoolean(ParserJob.SKIP_TRUNCATED, true);
+      boolean sitemap = conf.getBoolean(FetcherJob.SITEMAP, false);
+
+      if (sitemap) {
+        skipTruncated = false;
+      } else {
+        skipTruncated = conf.getBoolean(ParserJob.SKIP_TRUNCATED, true);
+      }
       parseUtil = new ParseUtil(conf);
     }
     LOG.info("Fetcher: threads: " + threadCount);
