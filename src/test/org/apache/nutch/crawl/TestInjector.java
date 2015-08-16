@@ -18,6 +18,7 @@ package org.apache.nutch.crawl;
 
 import org.apache.avro.util.Utf8;
 import org.apache.hadoop.fs.Path;
+import org.apache.nutch.net.URLFilters;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.AbstractNutchTest;
 import org.apache.nutch.util.Bytes;
@@ -48,6 +49,107 @@ public class TestInjector extends AbstractNutchTest {
   public void setUp() throws Exception {
     super.setUp();
     urlPath = new Path(testdir, "urls");
+  }
+
+  @Test
+  @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
+  public void testSitemapInject() throws Exception {
+    ArrayList<String> urls = new ArrayList<String>();
+    for (int i = 0; i < 10; i++) {
+      urls.add("http://zzz.com/" + i + ".html\tnutch.score=" + i
+          + "\tcustom.attribute=" + i);
+    }
+    int sitemapUrlCnt = 2;
+    for (int i = 10; i < 10 + sitemapUrlCnt; i++) {
+      urls.add("http://zzz.com/" + i + ".html\tnutch.score=" + i
+          + "\tcustom.attribute=" + i
+          + "\t-sitemap");
+    }
+
+    CrawlTestUtil.generateSeedList(fs, urlPath, urls);
+
+    InjectorJob injector = new InjectorJob();
+    injector.setConf(conf);
+    injector.inject(urlPath);
+
+    List<URLWebPage> pages = CrawlTestUtil.readContents(webPageStore, null,
+        fields);
+    ArrayList<String> read = new ArrayList<String>();
+
+    int sitemapCount = 0;
+
+    for (URLWebPage up : pages) {
+      WebPage page = up.getDatum();
+      String representation = up.getUrl();
+      representation += "\tnutch.score=" + page.getScore().intValue();
+      ByteBuffer bb = page.getMetadata().get(new Utf8("custom.attribute"));
+      if (bb != null) {
+        representation += "\tcustom.attribute=" + Bytes.toString(bb);
+      }
+      if (URLFilters.isSitemap(page)) {
+        representation += "\t-sitemap";
+        sitemapCount++;
+      }
+      read.add(representation);
+    }
+
+    Collections.sort(read);
+    Collections.sort(urls);
+
+    assertEquals(urls.size(), read.size());
+
+    assertTrue(urls.containsAll(read));
+    assertTrue(read.containsAll(urls));
+
+    assertEquals(sitemapCount, sitemapUrlCnt);
+
+  }
+
+  @Test
+  @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
+  public void testMultiSitemapInject() throws Exception {
+    ArrayList<String> urls = new ArrayList<String>();
+    for (int i = 0; i < 10; i++) {
+      urls.add("http://zzz" + i + ".com/\tnutch.score=" + i
+          + "\tcustom.attribute=" + i);
+    }
+
+    int sitemapUrlCnt = 2;
+    for (int i = 10; i < 10 + sitemapUrlCnt; i++) {
+      String url = "http://zzz.com/" + i + ".html\tnutch.score=" + i
+          + "\tcustom.attribute=" + i
+          + "\tsitemaps:";
+
+      for (int j = 0; j < sitemapUrlCnt; j++) {
+        url += " sitemap" + j + ".xml";
+      }
+
+      urls.add(url);
+    }
+
+    CrawlTestUtil.generateSeedList(fs, urlPath, urls);
+
+    InjectorJob injector = new InjectorJob();
+    injector.setConf(conf);
+    injector.inject(urlPath);
+
+    List<URLWebPage> pages = CrawlTestUtil.readContents(webPageStore, null,
+        fields);
+    ArrayList<String> read = new ArrayList<String>();
+
+    int sitemapCount = 0;
+
+    for (URLWebPage up : pages) {
+      WebPage page = up.getDatum();
+      if (URLFilters.isSitemap(page)) {
+        sitemapCount++;
+
+      }
+    }
+
+    assertEquals(sitemapCount, sitemapUrlCnt * sitemapUrlCnt);
+    assertEquals(urls.size() + sitemapUrlCnt * sitemapUrlCnt, pages.size());
+
   }
 
   @Test
