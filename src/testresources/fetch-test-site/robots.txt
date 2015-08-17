@@ -1,0 +1,3 @@
+Sitemap: http://localhost/sitemap1.xml
+Sitemap: http://localhost/sitemap2.xml
+Sitemap: http://localhost/sitemap3.xml
