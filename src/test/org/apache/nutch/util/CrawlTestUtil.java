@@ -156,10 +156,8 @@ public class CrawlTestUtil {
   /**
    * Generate Fetchlist.
    *
-   * @param numResults
-   *          number of results to generate
-   * @param config
-   *          Configuration to use
+   * @param numResults number of results to generate
+   * @param config     Configuration to use
    * @return path to generated batch
    * @throws IOException
    */
