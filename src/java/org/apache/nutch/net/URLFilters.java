@@ -98,8 +98,8 @@ public class URLFilters {
   }
 
   public static boolean isSitemap(WebPage page) {
-    if (Mark.INJECT_MARK.checkMark(page).equals(
-        InjectType.SITEMAP_INJECT.getTypeString())) {
+    if (InjectType.SITEMAP_INJECT.getTypeString().equals(
+        Mark.INJECT_MARK.checkMark(page))) {
       return true;
     } else {
       return false;
