@@ -58,15 +58,15 @@ public class TestFetcher extends AbstractNutchTest {
   public void setUp() throws Exception {
     super.setUp();
     urlPath = new Path(testdir, "urls");
-    //    server = CrawlTestUtil.getServer(conf.getInt("content.server.port", 50000),
-    //        "build/test/data/fetch-test-site");
-    //    server.start();
+    server = CrawlTestUtil.getServer(conf.getInt("content.server.port", 50000),
+        "build/test/data/fetch-test-site");
+    server.start();
   }
 
   @Override
   @After
   public void tearDown() throws Exception {
-    //    server.stop();
+    server.stop();
     fs.delete(testdir, true);
   }
 
@@ -149,7 +149,7 @@ public class TestFetcher extends AbstractNutchTest {
   }
 
   @Test
-  //  @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
+  @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
   public void testSitemapFetch() throws Exception {
     String batchId = "1234";
     conf.set(GeneratorJob.BATCH_ID, batchId);
@@ -276,7 +276,7 @@ public class TestFetcher extends AbstractNutchTest {
   }
 
   private void addUrl(ArrayList<String> urls, String page) {
-    urls.add("http://127.0.0.1:55000" + "/"
+    urls.add("http://127.0.0.1:" + server.getConnectors()[0].getPort() + "/"
         + page);
   }
 
