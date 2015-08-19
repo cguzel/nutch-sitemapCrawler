@@ -192,20 +192,21 @@ public class ParseUtil extends Configured {
       return;
     }
 
-    SitemapParser sParser = new SitemapParser();
-    SitemapParse sitemapParse = sParser.getParse(url, page);
+    NutchSitemapParser sParser = new NutchSitemapParser();
+    NutchSitemapParse nutchSitemapParse = sParser.getParse(url, page);
 
-    if (sitemapParse == null) {
+    if (nutchSitemapParse == null) {
       return;
     }
 
-    ParseStatus pstatus = sitemapParse.getParseStatus();
+    ParseStatus pstatus = nutchSitemapParse.getParseStatus();
     page.setParseStatus(pstatus);
     if (ParseStatusUtils.isSuccess(pstatus)) {
+      final Map<Outlink, Metadata> outlinkMap = nutchSitemapParse
+          .getOutlinkMap();
       if (pstatus.getMinorCode() == ParseStatusCodes.SUCCESS_REDIRECT) {
         successRedirect(url, page, pstatus);
-      } else {
-        final Map<Outlink, Metadata> outlinkMap = sitemapParse.getOutlinkMap();
+      } else if (outlinkMap != null) {
         Set<Outlink> outlinks = outlinkMap.keySet();
         setSignature(page);
 

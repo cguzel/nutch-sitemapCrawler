@@ -46,8 +46,6 @@ import static org.junit.Assert.assertEquals;
  */
 public class TestGenerator extends AbstractNutchTest {
 
-  public static final Logger LOG = LoggerFactory.getLogger(TestGenerator.class);
-
   private static String[] FIELDS = new String[] {
       WebPage.Field.MARKERS.getName(), WebPage.Field.SCORE.getName() };
 

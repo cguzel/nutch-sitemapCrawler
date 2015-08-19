@@ -23,15 +23,15 @@ import org.apache.nutch.metadata.Metadata;
 import java.util.List;
 import java.util.Map;
 
-public class SitemapParse {
+public class NutchSitemapParse {
 
   private Map<Outlink, Metadata> outlinkMap;
   private org.apache.nutch.storage.ParseStatus parseStatus;
 
-  public SitemapParse() {
+  public NutchSitemapParse() {
   }
 
-  public SitemapParse(Map<Outlink, Metadata> outlinkMap,
+  public NutchSitemapParse(Map<Outlink, Metadata> outlinkMap,
       org.apache.nutch.storage.ParseStatus parseStatus) {
     this.outlinkMap = outlinkMap;
     this.parseStatus = parseStatus;
