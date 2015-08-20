@@ -19,19 +19,14 @@ package org.apache.nutch.parse;
 
 import java.io.*;
 import java.net.MalformedURLException;
-import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.hadoop.io.*;
-import org.apache.nutch.metadata.Metadata;
 
 /* An outgoing link from a page. */
 public class Outlink implements Writable {
 
   private String toUrl;
   private String anchor;
-  private Metadata metadata;
 
   public Outlink() {
   }
@@ -41,42 +36,22 @@ public class Outlink implements Writable {
     if (anchor == null)
       anchor = "";
     this.anchor = anchor;
-    this.metadata = null;
-  }
-
-  public Outlink(String toUrl, String anchor,Metadata metadata) throws MalformedURLException {
-    this(toUrl,anchor);
-    this.metadata = metadata;
   }
 
   public void readFields(DataInput in) throws IOException {
     toUrl = Text.readString(in);
     anchor = Text.readString(in);
-    boolean hasMetadata = in.readBoolean();
-    metadata.readFields(in);
   }
 
   /** Skips over one Outlink in the input. */
   public static void skip(DataInput in) throws IOException {
     Text.skip(in); // skip toUrl
     Text.skip(in); // skip anchor
-    boolean hasMetadata = in.readBoolean();
-    if (hasMetadata) {
-      // skip metadata
-      Metadata metadata = new Metadata();
-      metadata.readFields(in);
-    }
   }
 
   public void write(DataOutput out) throws IOException {
     Text.writeString(out, toUrl);
     Text.writeString(out, anchor);
-    if (hasMetadata()) {
-      out.writeBoolean(true);
-      metadata.write(out);
-    } else {
-      out.writeBoolean(false);
-    }
   }
 
   public static Outlink read(DataInput in) throws IOException {
@@ -93,18 +68,6 @@ public class Outlink implements Writable {
     return anchor;
   }
 
-  public Metadata getMetadata() {
-    return metadata;
-  }
-
-  public void setMetadata(Metadata metadata) {
-    this.metadata = metadata;
-  }
-
-  public boolean hasMetadata() {
-    return metadata != null && metadata.size()>0;
-  }
-
   public boolean equals(Object o) {
     if (!(o instanceof Outlink))
       return false;
@@ -113,19 +76,8 @@ public class Outlink implements Writable {
   }
 
   public String toString() {
-    StringBuffer buffer = new StringBuffer("toUrl: ");
-    buffer.append(toUrl);
-    buffer.append(" anchor: ");
-    buffer.append(anchor);
-    if (hasMetadata()) {
-      for (Map.Entry<String, String[]> e : metadata.getMetaData()) {
-        buffer.append(" ");
-        buffer.append(e.getKey());
-        buffer.append(": ");
-        buffer.append(e.getValue());
-      }
-    }
-    return buffer.toString();
+    return "toUrl: " + toUrl + " anchor: " + anchor; // removed "\n". toString,
+                                                     // not printLine... WD.
   }
 
 }

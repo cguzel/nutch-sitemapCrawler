@@ -68,7 +68,6 @@
 		<plugin id="feed" />
 	</mimeType>
 
-
        <!-- Types for parse-ext plugin: required for unit tests to pass. -->
 
 	<mimeType name="application/vnd.nutch.example.cat">
