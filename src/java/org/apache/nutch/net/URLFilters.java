@@ -21,10 +21,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.nutch.crawl.InjectType;
 import org.apache.nutch.plugin.Extension;
 import org.apache.nutch.plugin.ExtensionPoint;
 import org.apache.nutch.plugin.PluginRuntimeException;
 import org.apache.nutch.plugin.PluginRepository;
+import org.apache.nutch.storage.Mark;
+import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.ObjectCache;
 
 import org.apache.hadoop.conf.Configuration;
@@ -92,5 +95,14 @@ public class URLFilters {
 
     }
     return urlString;
+  }
+
+  public static boolean isSitemap(WebPage page) {
+    if (InjectType.SITEMAP_INJECT.getTypeString().equals(
+        Mark.INJECT_MARK.checkMark(page))) {
+      return true;
+    } else {
+      return false;
+    }
   }
 }

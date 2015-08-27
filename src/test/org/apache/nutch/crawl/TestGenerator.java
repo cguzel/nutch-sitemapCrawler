@@ -17,6 +17,7 @@
 package org.apache.nutch.crawl;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.nutch.storage.Mark;
 import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.AbstractNutchTest;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -43,8 +45,6 @@ import static org.junit.Assert.assertEquals;
  * 
  */
 public class TestGenerator extends AbstractNutchTest {
-
-  public static final Logger LOG = LoggerFactory.getLogger(TestGenerator.class);
 
   private static String[] FIELDS = new String[] {
       WebPage.Field.MARKERS.getName(), WebPage.Field.SCORE.getName() };
@@ -70,6 +70,9 @@ public class TestGenerator extends AbstractNutchTest {
   @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
   public void testGenerateHighest() throws Exception {
 
+    String batchId = "1234";
+    conf.set(GeneratorJob.BATCH_ID, batchId);
+
     final int NUM_RESULTS = 2;
 
     ArrayList<URLWebPage> list = new ArrayList<URLWebPage>();
@@ -83,7 +86,7 @@ public class TestGenerator extends AbstractNutchTest {
     }
     webPageStore.flush();
 
-    generateFetchlist(NUM_RESULTS, conf, false);
+    CrawlTestUtil.generateFetchlist(NUM_RESULTS, conf, false, false);
 
     ArrayList<URLWebPage> l = CrawlTestUtil.readContents(webPageStore,
         Mark.GENERATE_MARK, FIELDS);
@@ -132,6 +135,9 @@ public class TestGenerator extends AbstractNutchTest {
   @Test
   @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
   public void testGenerateHostLimit() throws Exception {
+    String batchId = "1234";
+    conf.set(GeneratorJob.BATCH_ID, batchId);
+
     ArrayList<URLWebPage> list = new ArrayList<URLWebPage>();
 
     list.add(createURLWebPage("http://www.example.com/index1.html", 1, 1));
@@ -147,7 +153,8 @@ public class TestGenerator extends AbstractNutchTest {
     myConfiguration.setInt(GeneratorJob.GENERATOR_MAX_COUNT, 1);
     myConfiguration.set(GeneratorJob.GENERATOR_COUNT_MODE,
         GeneratorJob.GENERATOR_COUNT_VALUE_HOST);
-    generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
+    CrawlTestUtil.generateFetchlist(Integer.MAX_VALUE, myConfiguration, false,
+        false);
 
     ArrayList<URLWebPage> fetchList = CrawlTestUtil.readContents(webPageStore,
         Mark.GENERATE_MARK, FIELDS);
@@ -157,7 +164,8 @@ public class TestGenerator extends AbstractNutchTest {
 
     myConfiguration = new Configuration(conf);
     myConfiguration.setInt(GeneratorJob.GENERATOR_MAX_COUNT, 2);
-    generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
+    CrawlTestUtil.generateFetchlist(Integer.MAX_VALUE, myConfiguration, false,
+        false);
 
     fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK,
         FIELDS);
@@ -167,7 +175,8 @@ public class TestGenerator extends AbstractNutchTest {
 
     myConfiguration = new Configuration(conf);
     myConfiguration.setInt(GeneratorJob.GENERATOR_MAX_COUNT, 3);
-    generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
+    CrawlTestUtil.generateFetchlist(Integer.MAX_VALUE, myConfiguration, false,
+        false);
 
     fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK,
         FIELDS);
@@ -185,6 +194,9 @@ public class TestGenerator extends AbstractNutchTest {
   @Test
   @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
   public void testGenerateDomainLimit() throws Exception {
+    String batchId = "1234";
+    conf.set(GeneratorJob.BATCH_ID, batchId);
+
     ArrayList<URLWebPage> list = new ArrayList<URLWebPage>();
 
     list.add(createURLWebPage("http://one.example.com/index.html", 1, 1));
@@ -204,7 +216,8 @@ public class TestGenerator extends AbstractNutchTest {
     myConfiguration.set(GeneratorJob.GENERATOR_COUNT_MODE,
         GeneratorJob.GENERATOR_COUNT_VALUE_DOMAIN);
 
-    generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
+    CrawlTestUtil.generateFetchlist(Integer.MAX_VALUE, myConfiguration, false,
+        false);
 
     ArrayList<URLWebPage> fetchList = CrawlTestUtil.readContents(webPageStore,
         Mark.GENERATE_MARK, FIELDS);
@@ -214,7 +227,8 @@ public class TestGenerator extends AbstractNutchTest {
 
     myConfiguration = new Configuration(myConfiguration);
     myConfiguration.setInt(GeneratorJob.GENERATOR_MAX_COUNT, 2);
-    generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
+    CrawlTestUtil.generateFetchlist(Integer.MAX_VALUE, myConfiguration, false,
+        false);
 
     fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK,
         FIELDS);
@@ -224,7 +238,8 @@ public class TestGenerator extends AbstractNutchTest {
 
     myConfiguration = new Configuration(myConfiguration);
     myConfiguration.setInt(GeneratorJob.GENERATOR_MAX_COUNT, 3);
-    generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
+    CrawlTestUtil.generateFetchlist(Integer.MAX_VALUE, myConfiguration, false,
+        false);
 
     fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK,
         FIELDS);
@@ -241,7 +256,9 @@ public class TestGenerator extends AbstractNutchTest {
    */
   @Test
   @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
-  public void testFilter() throws IOException, Exception {
+  public void testFilter() throws Exception {
+    String batchId = "1234";
+    conf.set(GeneratorJob.BATCH_ID, batchId);
 
     ArrayList<URLWebPage> list = new ArrayList<URLWebPage>();
 
@@ -257,14 +274,16 @@ public class TestGenerator extends AbstractNutchTest {
     Configuration myConfiguration = new Configuration(conf);
     myConfiguration.set("urlfilter.suffix.file", "filter-all.txt");
 
-    generateFetchlist(Integer.MAX_VALUE, myConfiguration, true);
+    CrawlTestUtil.generateFetchlist(Integer.MAX_VALUE, myConfiguration, true,
+        false);
 
     ArrayList<URLWebPage> fetchList = CrawlTestUtil.readContents(webPageStore,
         Mark.GENERATE_MARK, FIELDS);
 
     assertEquals(0, fetchList.size());
 
-    generateFetchlist(Integer.MAX_VALUE, myConfiguration, false);
+    CrawlTestUtil.generateFetchlist(Integer.MAX_VALUE, myConfiguration, false,
+        false);
 
     fetchList = CrawlTestUtil.readContents(webPageStore, Mark.GENERATE_MARK,
         FIELDS);
@@ -274,26 +293,74 @@ public class TestGenerator extends AbstractNutchTest {
 
   }
 
-  /**
-   * Generate Fetchlist.
-   * 
-   * @param numResults
-   *          number of results to generate
-   * @param config
-   *          Configuration to use
-   * @return path to generated batch
-   * @throws IOException
-   */
-  private void generateFetchlist(int numResults, Configuration config,
-      boolean filter) throws Exception {
-    // generate batch
-    GeneratorJob g = new GeneratorJob();
-    g.setConf(config);
-    String batchId = g.generate(numResults, System.currentTimeMillis(), filter,
-        false);
-    if (batchId == null)
-      throw new RuntimeException("Generator failed");
+  @Test
+  @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
+  public void testGenerateOnlySitemap() throws Exception {
+    boolean sitemap = true;
+    ArrayList<String> urls = new ArrayList<String>();
+    for (int i = 0; i < 10; i++) {
+      urls.add("http://zzz.com/" + i + ".html\tnutch.score=" + i
+          + "\tcustom.attribute=" + i);
+    }
+    int sitemapUrlCnt = 2;
+    for (int i = 10; i < 10 + sitemapUrlCnt; i++) {
+      urls.add("http://zzz.com/" + i + ".html\tnutch.score=" + i
+          + "\tcustom.attribute=" + i
+          + "\t-sitemap");
+    }
+
+    ArrayList<URLWebPage> fetchList = generateForSitemap(urls, sitemap);
+
+    assertEquals(2, fetchList.size());
   }
+
+  @Test
+  @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
+  public void testGenerateNoneSitemap() throws Exception {
+    boolean sitemap = false;
+    ArrayList<String> urls = new ArrayList<String>();
+    for (int i = 0; i < 10; i++) {
+      urls.add("http://zzz.com/" + i + ".html\tnutch.score=" + i
+          + "\tcustom.attribute=" + i);
+    }
+    int sitemapUrlCnt = 2;
+    for (int i = 10; i < 10 + sitemapUrlCnt; i++) {
+      urls.add("http://zzz.com/" + i + ".html\tnutch.score=" + i
+          + "\tcustom.attribute=" + i
+          + "\t-sitemap");
+    }
+
+    ArrayList<URLWebPage> fetchList = generateForSitemap(urls, sitemap);
+
+    assertEquals(10, fetchList.size());
+
+  }
+
+  private ArrayList<URLWebPage> generateForSitemap(ArrayList<String> urls,
+      boolean sitemap) throws Exception {
+    Path urlPath = new Path(testdir, "urls");
+    String batchId = "1234";
+    conf.set(GeneratorJob.BATCH_ID, batchId);
+
+    CrawlTestUtil.generateSeedList(fs, urlPath, urls);
+
+    InjectorJob injector = new InjectorJob();
+    injector.setConf(conf);
+    injector.inject(urlPath);
+
+    List<URLWebPage> pages = CrawlTestUtil.readContents(webPageStore, null,
+        FIELDS);
+
+    Configuration myConfiguration = new Configuration(conf);
+    CrawlTestUtil.generateFetchlist(Integer.MAX_VALUE, myConfiguration, true,
+        sitemap);
+
+    ArrayList<URLWebPage> fetchList = CrawlTestUtil.readContents(webPageStore,
+        Mark.GENERATE_MARK, FIELDS);
+
+    return fetchList;
+  }
+
 
   /**
    * Constructs new {@link URLWebPage} from submitted parameters.

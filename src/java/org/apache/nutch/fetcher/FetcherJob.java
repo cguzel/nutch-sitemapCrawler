@@ -18,16 +18,15 @@ package org.apache.nutch.fetcher;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
-import java.util.StringTokenizer;
 
 import org.apache.avro.util.Utf8;
 import org.apache.gora.filter.FilterOp;
 import org.apache.gora.filter.MapFieldValueFilter;
+import org.apache.nutch.net.URLFilters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -64,6 +63,8 @@ public class FetcherJob extends NutchTool implements Tool {
   public static final Utf8 REDIRECT_DISCOVERED = new Utf8("___rdrdsc__");
 
   public static final String RESUME_KEY = "fetcher.job.resume";
+  public static final String SITEMAP = "fetcher.job.sitemap";
+  public static final String SITEMAP_DETECT = "fetcher.job.sitemap.detect";
   public static final String PARSE_KEY = "fetcher.parse";
   public static final String THREADS_KEY = "fetcher.threads.fetch";
 
@@ -126,6 +127,13 @@ public class FetcherJob extends NutchTool implements Tool {
         }
         return;
       }
+
+      boolean sitemap = context.getConfiguration().getBoolean(SITEMAP, false);
+
+      if ((sitemap && !URLFilters.isSitemap(page)) || !sitemap && URLFilters
+          .isSitemap(page))
+        return;
+
       context.write(new IntWritable(random.nextInt(65536)), new FetchEntry(
           context.getConfiguration(), key, page));
     }
@@ -161,6 +169,8 @@ public class FetcherJob extends NutchTool implements Tool {
     Integer threads = (Integer) args.get(Nutch.ARG_THREADS);
     Boolean shouldResume = (Boolean) args.get(Nutch.ARG_RESUME);
     Integer numTasks = (Integer) args.get(Nutch.ARG_NUMTASKS);
+    Boolean stmDetect = (Boolean) args.get(Nutch.ARG_SITEMAP_DETECT);
+    Boolean sitemap = (Boolean) args.get(Nutch.ARG_SITEMAP);
 
     if (threads != null && threads > 0) {
       getConf().setInt(THREADS_KEY, threads);
@@ -172,7 +182,12 @@ public class FetcherJob extends NutchTool implements Tool {
     if (shouldResume != null) {
       getConf().setBoolean(RESUME_KEY, shouldResume);
     }
-
+    if (stmDetect != null) {
+      getConf().setBoolean(SITEMAP_DETECT, stmDetect);
+    }
+    if (sitemap != null) {
+      getConf().setBoolean(SITEMAP, sitemap);
+    }
     LOG.info("FetcherJob: threads: " + getConf().getInt(THREADS_KEY, 10));
     LOG.info("FetcherJob: parsing: " + getConf().getBoolean(PARSE_KEY, false));
     LOG.info("FetcherJob: resuming: " + getConf().getBoolean(RESUME_KEY, false));
@@ -240,6 +255,11 @@ public class FetcherJob extends NutchTool implements Tool {
    */
   public int fetch(String batchId, int threads, boolean shouldResume,
       int numTasks) throws Exception {
+    return fetch(batchId, threads, shouldResume, numTasks, false, false);
+  }
+
+  public int fetch(String batchId, int threads, boolean shouldResume,
+      int numTasks, boolean stmDetect, boolean sitemap) throws Exception {
 
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     long start = System.currentTimeMillis();
@@ -252,7 +272,8 @@ public class FetcherJob extends NutchTool implements Tool {
     }
 
     run(ToolUtil.toArgMap(Nutch.ARG_BATCH, batchId, Nutch.ARG_THREADS, threads,
-        Nutch.ARG_RESUME, shouldResume, Nutch.ARG_NUMTASKS, numTasks));
+        Nutch.ARG_RESUME, shouldResume, Nutch.ARG_NUMTASKS, numTasks,
+        Nutch.ARG_SITEMAP_DETECT, stmDetect, Nutch.ARG_SITEMAP, sitemap));
 
     long finish = System.currentTimeMillis();
     LOG.info("FetcherJob: finished at " + sdf.format(finish)
@@ -278,6 +299,7 @@ public class FetcherJob extends NutchTool implements Tool {
   public int run(String[] args) throws Exception {
     int threads = -1;
     boolean shouldResume = false;
+    boolean stmRobot = false, sitemap = false;
     String batchId;
 
     String usage = "Usage: FetcherJob (<batchId> | -all) [-crawlId <id>] "
@@ -286,7 +308,9 @@ public class FetcherJob extends NutchTool implements Tool {
         + "    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)\n"
         + "    -threads N    - number of fetching threads per task\n"
         + "    -resume       - resume interrupted job\n"
-        + "    -numTasks N   - if N > 0 then use this many reduce tasks for fetching \n \t \t    (default: mapred.map.tasks)";
+        + "    -numTasks N   - if N > 0 then use this many reduce tasks for fetching \n \t \t    (default: mapred.map.tasks)"
+        + "    -sitemap      - only sitemap files are fetched, defaults to false"
+        + "    -stmDetect    - sitemap files are detected from robot.txt file";
 
     if (args.length == 0) {
       System.err.println(usage);
@@ -309,13 +333,17 @@ public class FetcherJob extends NutchTool implements Tool {
         numTasks = Integer.parseInt(args[++i]);
       } else if ("-crawlId".equals(args[i])) {
         getConf().set(Nutch.CRAWL_ID_KEY, args[++i]);
+      } else if ("-sitemap".equals(args[i])) {
+        sitemap = true;
+      } else if ("-stmDetect".equals(args[i])) {
+          stmRobot = true;
       } else {
         throw new IllegalArgumentException("arg " + args[i] + " not recognized");
       }
     }
 
-    int fetchcode = fetch(batchId, threads, shouldResume, numTasks); // run the
-                                                                     // Fetcher
+    int fetchcode = fetch(batchId, threads, shouldResume, numTasks, stmRobot,
+        sitemap); // run the Fetcher
 
     return fetchcode;
   }

@@ -25,6 +25,7 @@ import java.util.Map;
 
 import org.apache.avro.util.Utf8;
 import org.apache.gora.filter.MapFieldValueFilter;
+import org.apache.nutch.net.URLFilters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -33,7 +34,6 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.nutch.crawl.GeneratorJob;
 import org.apache.nutch.crawl.SignatureFactory;
-import org.apache.nutch.crawl.URLWebPage;
 import org.apache.nutch.metadata.HttpHeaders;
 import org.apache.nutch.metadata.Nutch;
 import org.apache.nutch.storage.Mark;
@@ -49,7 +49,6 @@ import org.apache.nutch.util.TableUtil;
 import org.apache.nutch.util.TimingUtil;
 import org.apache.nutch.util.ToolUtil;
 import org.apache.gora.filter.FilterOp;
-import org.apache.gora.filter.SingleFieldValueFilter;
 import org.apache.gora.mapreduce.GoraMapper;
 
 public class ParserJob extends NutchTool implements Tool {
@@ -62,6 +61,8 @@ public class ParserJob extends NutchTool implements Tool {
   public static final String SKIP_TRUNCATED = "parser.skip.truncated";
 
   private static final Utf8 REPARSE = new Utf8("-reparse");
+
+  private static String SITEMAP_PARSE = "parse.sitemap";
 
   private static final Collection<WebPage.Field> FIELDS = new HashSet<WebPage.Field>();
 
@@ -77,6 +78,8 @@ public class ParserJob extends NutchTool implements Tool {
     FIELDS.add(WebPage.Field.OUTLINKS);
     FIELDS.add(WebPage.Field.METADATA);
     FIELDS.add(WebPage.Field.HEADERS);
+    FIELDS.add(WebPage.Field.SITEMAPS);
+    FIELDS.add(WebPage.Field.STM_PRIORITY);
   }
 
   public static class ParserMapper extends
@@ -86,6 +89,8 @@ public class ParserJob extends NutchTool implements Tool {
     private boolean shouldResume;
 
     private boolean force;
+
+    private boolean sitemap;
 
     private Utf8 batchId;
 
@@ -97,9 +102,14 @@ public class ParserJob extends NutchTool implements Tool {
       parseUtil = new ParseUtil(conf);
       shouldResume = conf.getBoolean(RESUME_KEY, false);
       force = conf.getBoolean(FORCE_KEY, false);
+      sitemap = conf.getBoolean(SITEMAP_PARSE, false);
       batchId = new Utf8(
           conf.get(GeneratorJob.BATCH_ID, Nutch.ALL_BATCH_ID_STR));
-      skipTruncated = conf.getBoolean(SKIP_TRUNCATED, true);
+      if (sitemap) {
+        skipTruncated = false;
+      } else {
+        skipTruncated = conf.getBoolean(SKIP_TRUNCATED, true);
+      }
     }
 
     @Override
@@ -111,7 +121,7 @@ public class ParserJob extends NutchTool implements Tool {
       } else {
         if (Mark.FETCH_MARK.checkMark(page) == null) {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("Skipping " + TableUtil.unreverseUrl(key)
+            LOG.debug("Skipping " + unreverseKey
                 + "; not fetched yet");
           }
           return;
@@ -132,7 +142,14 @@ public class ParserJob extends NutchTool implements Tool {
         return;
       }
 
-      parseUtil.process(key, page);
+      if (sitemap && URLFilters.isSitemap(page)) {
+        LOG.info("Parsing for sitemap"); //TODO this log should be top line
+        parseUtil.processSitemapParse(unreverseKey, page, context);
+      } else {
+        parseUtil.process(unreverseKey, page);
+      }
+
+
       ParseStatus pstatus = page.getParseStatus();
       if (pstatus != null) {
         context.getCounter("ParserStatus",
@@ -232,6 +249,7 @@ public class ParserJob extends NutchTool implements Tool {
     String batchId = (String) args.get(Nutch.ARG_BATCH);
     Boolean shouldResume = (Boolean) args.get(Nutch.ARG_RESUME);
     Boolean force = (Boolean) args.get(Nutch.ARG_FORCE);
+    Boolean sitemap = (Boolean) args.get(Nutch.ARG_SITEMAP);
 
     if (batchId != null) {
       getConf().set(GeneratorJob.BATCH_ID, batchId);
@@ -241,6 +259,9 @@ public class ParserJob extends NutchTool implements Tool {
     }
     if (force != null) {
       getConf().setBoolean(FORCE_KEY, force);
+    }
+    if (sitemap != null) {
+      getConf().setBoolean(SITEMAP_PARSE, sitemap);
     }
     LOG.info("ParserJob: resuming:\t" + getConf().getBoolean(RESUME_KEY, false));
     LOG.info("ParserJob: forced reparse:\t"
@@ -280,13 +301,19 @@ public class ParserJob extends NutchTool implements Tool {
 
   public int parse(String batchId, boolean shouldResume, boolean force)
       throws Exception {
+    return parse(batchId, shouldResume, force, false);
+  }
+
+  public int parse(String batchId, boolean shouldResume, boolean force,
+      boolean sitemap)
+      throws Exception {
 
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     long start = System.currentTimeMillis();
     LOG.info("ParserJob: starting at " + sdf.format(start));
 
     run(ToolUtil.toArgMap(Nutch.ARG_BATCH, batchId, Nutch.ARG_RESUME,
-        shouldResume, Nutch.ARG_FORCE, force));
+        shouldResume, Nutch.ARG_FORCE, force, Nutch.ARG_SITEMAP, sitemap));
     LOG.info("ParserJob: success");
 
     long finish = System.currentTimeMillis();
@@ -298,6 +325,7 @@ public class ParserJob extends NutchTool implements Tool {
   public int run(String[] args) throws Exception {
     boolean shouldResume = false;
     boolean force = false;
+    boolean sitemap = false;
     String batchId = null;
 
     if (args.length < 1) {
@@ -309,6 +337,8 @@ public class ParserJob extends NutchTool implements Tool {
           .println("    -crawlId <id> - the id to prefix the schemas to operate on, \n \t \t    (default: storage.crawl.id)");
       System.err
           .println("    -all          - consider pages from all crawl jobs");
+      System.err
+          .println("    -sitemap      - parse only sitemap pages, default false");
       System.err
           .println("    -resume       - resume a previous incomplete job");
       System.err
@@ -324,6 +354,8 @@ public class ParserJob extends NutchTool implements Tool {
         getConf().set(Nutch.CRAWL_ID_KEY, args[++i]);
       } else if ("-all".equals(args[i])) {
         batchId = args[i];
+      } else if ("-sitemap".equals(args[i])) {
+        sitemap = true;
       } else {
         if (batchId != null) {
           System.err.println("BatchId already set to '" + batchId + "'!");
@@ -336,7 +368,7 @@ public class ParserJob extends NutchTool implements Tool {
       System.err.println("BatchId not set (or -all/-reparse not specified)!");
       return -1;
     }
-    return parse(batchId, shouldResume, force);
+    return parse(batchId, shouldResume, force, sitemap);
   }
 
   public static void main(String[] args) throws Exception {
