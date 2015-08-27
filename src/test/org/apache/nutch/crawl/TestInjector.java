@@ -23,6 +23,7 @@ import org.apache.nutch.storage.WebPage;
 import org.apache.nutch.util.AbstractNutchTest;
 import org.apache.nutch.util.Bytes;
 import org.apache.nutch.util.CrawlTestUtil;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -52,7 +53,6 @@ public class TestInjector extends AbstractNutchTest {
   }
 
   @Test
-  @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
   public void testSitemapInject() throws Exception {
     ArrayList<String> urls = new ArrayList<String>();
     for (int i = 0; i < 10; i++) {
@@ -106,7 +106,6 @@ public class TestInjector extends AbstractNutchTest {
   }
 
   @Test
-  @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
   public void testMultiSitemapInject() throws Exception {
     ArrayList<String> urls = new ArrayList<String>();
     for (int i = 0; i < 10; i++) {
@@ -153,7 +152,6 @@ public class TestInjector extends AbstractNutchTest {
   }
 
   @Test
-  @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
   public void testInject() throws Exception {
     ArrayList<String> urls = new ArrayList<String>();
     for (int i = 0; i < 100; i++) {
@@ -221,5 +219,11 @@ public class TestInjector extends AbstractNutchTest {
       read.add(representation);
     }
     return read;
+  }
+
+  @Override
+  @After
+  public void tearDown() throws Exception {
+    super.tearDown();
   }
 }

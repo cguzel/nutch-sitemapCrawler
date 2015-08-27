@@ -68,6 +68,7 @@ public class TestFetcher extends AbstractNutchTest {
   public void tearDown() throws Exception {
     server.stop();
     fs.delete(testdir, true);
+    super.tearDown();
   }
 
   @Test
@@ -233,7 +234,7 @@ public class TestFetcher extends AbstractNutchTest {
     // generate seedlist
     ArrayList<String> urls = new ArrayList<String>();
 
-    addUrl(urls, "index.html");
+    addUrl(urls, "");
 
     String[] fields = new String[] {
         WebPage.Field.MARKERS.getName(), WebPage.Field.SCORE.getName() };
@@ -261,7 +262,6 @@ public class TestFetcher extends AbstractNutchTest {
     List<URLWebPage> pages = CrawlTestUtil.readContents(webPageStore,
         Mark.FETCH_MARK, (String[]) null);
     assertEquals(urls.size(), pages.size());
-    List<String> handledurls = new ArrayList<String>();
     for (URLWebPage up : pages) {
 
       ProtocolFactory protocolFactory = new ProtocolFactory(conf);

@@ -84,7 +84,6 @@ public class TestGenerator extends AbstractNutchTest {
     for (URLWebPage uwp : list) {
       webPageStore.put(TableUtil.reverseUrl(uwp.getUrl()), uwp.getDatum());
     }
-    webPageStore.flush();
 
     CrawlTestUtil.generateFetchlist(NUM_RESULTS, conf, false, false);
 
@@ -147,7 +146,6 @@ public class TestGenerator extends AbstractNutchTest {
     for (URLWebPage uwp : list) {
       webPageStore.put(TableUtil.reverseUrl(uwp.getUrl()), uwp.getDatum());
     }
-    webPageStore.flush();
 
     Configuration myConfiguration = new Configuration(conf);
     myConfiguration.setInt(GeneratorJob.GENERATOR_MAX_COUNT, 1);
@@ -209,7 +207,6 @@ public class TestGenerator extends AbstractNutchTest {
     for (URLWebPage uwp : list) {
       webPageStore.put(TableUtil.reverseUrl(uwp.getUrl()), uwp.getDatum());
     }
-    webPageStore.flush();
 
     Configuration myConfiguration = new Configuration(conf);
     myConfiguration.setInt(GeneratorJob.GENERATOR_MAX_COUNT, 1);
@@ -269,7 +266,6 @@ public class TestGenerator extends AbstractNutchTest {
     for (URLWebPage uwp : list) {
       webPageStore.put(TableUtil.reverseUrl(uwp.getUrl()), uwp.getDatum());
     }
-    webPageStore.flush();
 
     Configuration myConfiguration = new Configuration(conf);
     myConfiguration.set("urlfilter.suffix.file", "filter-all.txt");
@@ -294,7 +290,6 @@ public class TestGenerator extends AbstractNutchTest {
   }
 
   @Test
-  @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
   public void testGenerateOnlySitemap() throws Exception {
     boolean sitemap = true;
     ArrayList<String> urls = new ArrayList<String>();
@@ -315,7 +310,6 @@ public class TestGenerator extends AbstractNutchTest {
   }
 
   @Test
-  @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
   public void testGenerateNoneSitemap() throws Exception {
     boolean sitemap = false;
     ArrayList<String> urls = new ArrayList<String>();
@@ -347,9 +341,6 @@ public class TestGenerator extends AbstractNutchTest {
     InjectorJob injector = new InjectorJob();
     injector.setConf(conf);
     injector.inject(urlPath);
-
-    List<URLWebPage> pages = CrawlTestUtil.readContents(webPageStore, null,
-        FIELDS);
 
     Configuration myConfiguration = new Configuration(conf);
     CrawlTestUtil.generateFetchlist(Integer.MAX_VALUE, myConfiguration, true,
