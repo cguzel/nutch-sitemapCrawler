@@ -928,15 +928,29 @@ public class WebPage extends org.apache.gora.persistency.impl.PersistentBase
     return isDirty(16);
   }
 
+  /**
+   * Gets the value of the 'stmPriority' field. A stmPriority indicate
+   * priority value of the urls from sitemap.
+   */
   public java.lang.Float getStmPriority() {
     return stmPriority;
   }
 
+  /**
+   * Sets the value of the 'stmPriority' field. A stmPriority indicate
+   * priority value of the urls from sitemap. * @param value the value to set.
+   */
   public void setStmPriority(java.lang.Float value) {
     this.stmPriority = value;
     setDirty(25);
   }
 
+  /**
+   * Checks the dirty status of the 'stmPriority' field. A field is dirty if it
+   * represents a change that has not yet been written to the database.
+   * A stmPriority indicate priority value of the urls from sitemap. * @param
+   * value the value to set.
+   */
   public boolean isStmPriorityDirty(java.lang.Float value) {
     return isDirty(25);
   }
@@ -1182,10 +1196,18 @@ public class WebPage extends org.apache.gora.persistency.impl.PersistentBase
     return isDirty(23);
   }
 
+
+  /**
+   * Gets the value of the 'sitemaps' field. Sitemap list for the current host.
+   */
   public java.util.Map<java.lang.CharSequence, java.lang.CharSequence> getSitemaps() {
     return sitemaps;
   }
 
+  /**
+   * Sets the value of the 'sitemap' field. Sitemap list for the current host.
+   * @param value the value to set.
+   */
   public void setSitemaps(
       java.util.Map<java.lang.CharSequence, java.lang.CharSequence> value) {
     this.sitemaps = (value instanceof org.apache.gora.persistency.Dirtyable) ? value
@@ -1193,6 +1215,12 @@ public class WebPage extends org.apache.gora.persistency.impl.PersistentBase
     setDirty(24);
   }
 
+  /**
+   * Checks the dirty status of the 'sitemap' field. A field is dirty if it
+   * represents a change that has not yet been written to the database.
+   * Sets the value of the 'sitemap' field. Sitemap list for the current host.
+   * @param value the value to set.
+   */
   public boolean isSitemapsDirty(
       java.util.Map<java.lang.CharSequence, java.lang.CharSequence> value) {
     return isDirty(24);
@@ -2978,33 +3006,58 @@ public class WebPage extends org.apache.gora.persistency.impl.PersistentBase
           "IsDirty is not supported on tombstones");
     }
 
+    /**
+     * Gets the value of the 'sitemaps' field. Sitemap list for the current host.
+     */
     public java.util.Map<java.lang.CharSequence, java.lang.CharSequence> getSitemaps() {
       throw new java.lang.UnsupportedOperationException(
           "Get is not supported on tombstones");
     }
 
+    /**
+     * Sets the value of the 'sitemaps' field. Sitemap list for the current
+     * host. @param value the value to set.
+     */
     public void setSitemaps(
         java.util.Map<java.lang.CharSequence, java.lang.CharSequence> value) {
       throw new java.lang.UnsupportedOperationException(
           "Set is not supported on tombstones");
     }
 
+    /**
+     * Checks the dirty status of the 'batchId' field. A field is dirty if it
+     * represents a change that has not yet been written to the database. Sitemap
+     * list for the current host. @param value the value to set.
+     */
     public boolean isSitemapsDirty(
         java.util.Map<java.lang.CharSequence, java.lang.CharSequence> value) {
       throw new java.lang.UnsupportedOperationException(
           "IsDirty is not supported on tombstones");
     }
 
+    /**
+     * Gets the value of the 'stmPriority' field. A stmPriority indicate
+     * priority value of the urls from sitemap.
+     */
     public java.lang.Float getStmPriority() {
       throw new java.lang.UnsupportedOperationException(
           "Get is not supported on tombstones");
     }
 
+    /**
+     * Sets the value of the 'stmPriority' field. A stmPriority indicate
+     * priority value of the urls from sitemap. * @param value the value to set.
+     */
     public void setStmPriority(java.lang.Float value) {
       throw new java.lang.UnsupportedOperationException(
           "Set is not supported on tombstones");
     }
-
+    /**
+     * Checks the dirty status of the 'stmPriority' field. A field is dirty if it
+     * represents a change that has not yet been written to the database.
+     * A stmPriority indicate priority value of the urls from sitemap. * @param
+     * value the value to set.
+     */
     public boolean isStmPriorityDirty(java.lang.Float value) {
       throw new java.lang.UnsupportedOperationException(
           "IsDirty is not supported on tombstones");

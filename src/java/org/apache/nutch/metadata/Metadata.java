@@ -94,9 +94,15 @@ public class Metadata implements Writable, CreativeCommons, DublinCore,
     return _getValues(name);
   }
 
+  /**
+   * Get the metadata list
+   *
+   * @return the values associated to a metadata name.
+   */
   public Set<Map.Entry<String, String[]>> getMetaData() {
     return metadata.entrySet();
   }
+
   private String[] _getValues(final String name) {
     String[] values = metadata.get(name);
     if (values == null) {

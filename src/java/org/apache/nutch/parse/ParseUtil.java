@@ -186,6 +186,10 @@ public class ParseUtil extends Configured {
     return false;
   }
 
+  /**
+   * Parses given sitemap page and stores parsed content within page.
+   *
+   */
   public void processSitemapParse(String url, WebPage page,
       Mapper.Context context) {
     if (status(url, page)) {

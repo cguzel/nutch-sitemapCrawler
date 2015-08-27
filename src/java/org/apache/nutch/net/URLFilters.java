@@ -97,6 +97,10 @@ public class URLFilters {
     return urlString;
   }
 
+  /**
+   * If the page is a sitemap, return true
+   *
+   * */
   public static boolean isSitemap(WebPage page) {
     if (InjectType.SITEMAP_INJECT.getTypeString().equals(
         Mark.INJECT_MARK.checkMark(page))) {

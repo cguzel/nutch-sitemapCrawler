@@ -258,6 +258,26 @@ public class FetcherJob extends NutchTool implements Tool {
     return fetch(batchId, threads, shouldResume, numTasks, false, false);
   }
 
+  /**
+   * Run fetcher.
+   *
+   * @param batchId
+   *          batchId (obtained from Generator) or null to fetch all generated
+   *          fetchlists
+   * @param threads
+   *          number of threads per map task
+   * @param shouldResume
+   * @param numTasks
+   *          number of fetching tasks (reducers). If set to < 1 then use the
+   *          default, which is mapred.map.tasks.
+   * @param stmDetect
+   *          If set true, sitemap detection is run.
+   * @param sitemap
+   *          If set true, only sitemap files is fetched, If set false, only
+   *          normal urls is fetched.
+   * @return 0 on success
+   * @throws Exception
+   */
   public int fetch(String batchId, int threads, boolean shouldResume,
       int numTasks, boolean stmDetect, boolean sitemap) throws Exception {
 
