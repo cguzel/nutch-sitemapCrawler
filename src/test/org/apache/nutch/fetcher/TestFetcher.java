@@ -71,6 +71,11 @@ public class TestFetcher extends AbstractNutchTest {
     super.tearDown();
   }
 
+  /**
+   * Test that only normal web page fetcher
+   *
+   * @throws Exception
+   */
   @Test
   @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
   public void testFetch() throws Exception {
@@ -149,6 +154,11 @@ public class TestFetcher extends AbstractNutchTest {
     assertTrue(normalUrls.containsAll(handledurls));
   }
 
+  /**
+   * Test that only sitemap page fetcher
+   *
+   * @throws Exception
+   */
   @Test
   @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
   public void testSitemapFetch() throws Exception {
@@ -225,6 +235,11 @@ public class TestFetcher extends AbstractNutchTest {
 
   }
 
+  /**
+   * Test that sitemap detection from robot.txt
+   *
+   * @throws Exception
+   */
   @Test
   @Ignore("Temporarily diable until NUTCH-1572 is addressed.")
   public void testSitemapDetect() throws Exception {

@@ -289,6 +289,11 @@ public class TestGenerator extends AbstractNutchTest {
 
   }
 
+  /**
+   * Test that generator generates fetchlist for only sitemaps.
+   *
+   * @throws Exception
+   */
   @Test
   public void testGenerateOnlySitemap() throws Exception {
     boolean sitemap = true;
@@ -309,6 +314,11 @@ public class TestGenerator extends AbstractNutchTest {
     assertEquals(2, fetchList.size());
   }
 
+  /**
+   * Test that generator generates fetchlist for only normal urls.
+   *
+   * @throws Exception
+   */
   @Test
   public void testGenerateNoneSitemap() throws Exception {
     boolean sitemap = false;

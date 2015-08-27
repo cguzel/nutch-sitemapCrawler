@@ -52,6 +52,11 @@ public class TestInjector extends AbstractNutchTest {
     urlPath = new Path(testdir, "urls");
   }
 
+  /**
+   * Test that injector for sitemap url
+   *
+   * @throws Exception
+   */
   @Test
   public void testSitemapInject() throws Exception {
     ArrayList<String> urls = new ArrayList<String>();
@@ -105,6 +110,11 @@ public class TestInjector extends AbstractNutchTest {
 
   }
 
+  /**
+   * Test that injector for multi sitemap urls
+   *
+   * @throws Exception
+   */
   @Test
   public void testMultiSitemapInject() throws Exception {
     ArrayList<String> urls = new ArrayList<String>();
@@ -151,6 +161,11 @@ public class TestInjector extends AbstractNutchTest {
 
   }
 
+  /**
+   * Test that injector
+   *
+   * @throws Exception
+   */
   @Test
   public void testInject() throws Exception {
     ArrayList<String> urls = new ArrayList<String>();
